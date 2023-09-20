@@ -41,7 +41,7 @@ void Tree<T>::add(const T& parentValue, const T& toAddValue)
     if (!root)
     {
         root = new TreeNode<T>(toAddValue);
-        std::cout << "Root initialized to: " << root->data;
+        std::cout << "Root initialized to: " << root->data << "\n";
         return;
     }
     if (!parentNode)
