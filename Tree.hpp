@@ -1,3 +1,4 @@
+#pragma once
 #include "TreeNode.hpp"
 
 template<typename T>
@@ -11,17 +12,18 @@ public:
     void printTree();
     void removeNode(const T& valueToRemove);
 
-    TreeNode<T>* find(const T& valueToFind) const;
+    std::shared_ptr<TreeNode<T>> find(const T& valueToFind) const;
 private:
-    TreeNode<T>* root;
+    std::shared_ptr<TreeNode<T>> root;
 
-    void addChild(TreeNode<T>* parentNode, const T& toAddValue);
-    void addNextSibling(TreeNode<T>* parentNode, TreeNode<T>* child);
-    void traverseTree(TreeNode<T>* node);
-    void removeAllChildren(TreeNode<T>* node);
-    void remakeLinks(const TreeNode<T>* nodeToRemove);
+    void addChild(std::shared_ptr<TreeNode<T>> parentNode, const T& toAddValue);
+    void addNextSibling(std::shared_ptr<TreeNode<T>> parentNode, std::shared_ptr<TreeNode<T>> child);
+    void traverseTree(std::shared_ptr<TreeNode<T>> node);
+    void removeAllChildren(std::shared_ptr<TreeNode<T>> node);
+    void remakeLinks(const std::shared_ptr<TreeNode<T>>nodeToRemove);
+    std::shared_ptr<TreeNode<T>> deepCopy(const std::shared_ptr<TreeNode<T>> srcNode);
 
-    bool isRoot(const TreeNode<T>* node) const;
+    bool isRoot(const std::shared_ptr<TreeNode<T>> node) const;
 
-    TreeNode<T>* getNode(TreeNode<T>* searchStartingNode, const T& valueToGet) const;
+    std::shared_ptr<TreeNode<T>> getNode(std::shared_ptr<TreeNode<T>> searchStartingNode, const T& valueToGet) const;
 };

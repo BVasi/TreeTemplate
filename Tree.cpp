@@ -10,13 +10,13 @@ Tree<T>::Tree()
 template<typename T>
 Tree<T>::Tree(const T& rootValue)
 {
-    root = new TreeNode<T>(rootValue);
+    root = std::make_shared<TreeNode<T>>(rootValue);
 }
 
 template<typename T>
-void Tree<T>::addNextSibling(TreeNode<T>* parentNode, TreeNode<T>* child)
+void Tree<T>::addNextSibling(std::shared_ptr<TreeNode<T>> parentNode, std::shared_ptr<TreeNode<T>> child)
 {
-    TreeNode<T>* currentChildNode = parentNode->firstChild;
+    std::shared_ptr<TreeNode<T>> currentChildNode = parentNode->firstChild;
     while (currentChildNode->nextSibling)
     {
         currentChildNode = currentChildNode->nextSibling;
@@ -26,9 +26,9 @@ void Tree<T>::addNextSibling(TreeNode<T>* parentNode, TreeNode<T>* child)
 }
 
 template<typename T>
-void Tree<T>::addChild(TreeNode<T>* parentNode, const T& toAddValue)
+void Tree<T>::addChild(std::shared_ptr<TreeNode<T>> parentNode, const T& toAddValue)
 {
-    TreeNode<T>* child = new TreeNode<T>(toAddValue);
+    std::shared_ptr<TreeNode<T>> child = std::make_shared<TreeNode<T>>(toAddValue);
 
     if (!parentNode->firstChild)
     {
@@ -46,11 +46,11 @@ void Tree<T>::insertNode(const T& parentValue, const T& toAddValue)
 {
     if (!root)
     {
-        root = new TreeNode<T>(toAddValue);
+        root = std::make_shared<TreeNode<T>>(toAddValue);
         std::cout << "Root initialized to: " << root->data << "\n";
         return;
     }
-    TreeNode<T>* parentNode = getNode(root, parentValue);
+    std::shared_ptr<TreeNode<T>> parentNode = getNode(root, parentValue);
     if (!parentNode)
     {
         std::cout << "Nothing to add!" << "\n";
@@ -61,14 +61,14 @@ void Tree<T>::insertNode(const T& parentValue, const T& toAddValue)
 }
 
 template<typename T>
-void Tree<T>::traverseTree(TreeNode<T>* node)
+void Tree<T>::traverseTree(std::shared_ptr<TreeNode<T>> node)
 {
     if (!node)
     {
         return;
     }
     std::cout << node->data << " ";
-    TreeNode<T>* currentChild = node->firstChild;
+    std::shared_ptr<TreeNode<T>> currentChild = node->firstChild;
     while (currentChild)
     {
         traverseTree(currentChild);
@@ -77,9 +77,9 @@ void Tree<T>::traverseTree(TreeNode<T>* node)
 }
 
 template<typename T>
-TreeNode<T>* Tree<T>::getNode(TreeNode<T>* searchStartingNode, const T& valueToGet) const
+std::shared_ptr<TreeNode<T>> Tree<T>::getNode(std::shared_ptr<TreeNode<T>> searchStartingNode, const T& valueToGet) const
 {
-    TreeNode<T>* nodeToFind = nullptr;
+    std::shared_ptr<TreeNode<T>> nodeToFind = nullptr;
 
     if (!searchStartingNode)
     {
@@ -89,7 +89,7 @@ TreeNode<T>* Tree<T>::getNode(TreeNode<T>* searchStartingNode, const T& valueToG
     {
         return searchStartingNode;
     }
-    TreeNode<T>* currentChild = searchStartingNode->firstChild;
+    std::shared_ptr<TreeNode<T>> currentChild = searchStartingNode->firstChild;
     while (!nodeToFind && currentChild)
     {
         nodeToFind = getNode(currentChild, valueToGet);
@@ -100,45 +100,45 @@ TreeNode<T>* Tree<T>::getNode(TreeNode<T>* searchStartingNode, const T& valueToG
 }
 
 template<typename T>
-TreeNode<T>* Tree<T>::find(const T& valueToFind) const
+std::shared_ptr<TreeNode<T>> Tree<T>::find(const T& valueToFind) const
 {
     return getNode(root, valueToFind);
 }
 
 template<typename T>
-bool Tree<T>::isRoot(const TreeNode<T>* node) const
+bool Tree<T>::isRoot(const std::shared_ptr<TreeNode<T>> node) const
 {
     return node == root;
 }
 
 template<typename T>
-void Tree<T>::removeAllChildren(TreeNode<T>* parentNode)
+void Tree<T>::removeAllChildren(std::shared_ptr<TreeNode<T>> parentNode)
 {
     if (!parentNode)
     {
         return;
     }
-    TreeNode<T>* currentChildNode = parentNode->firstChild;
+    std::shared_ptr<TreeNode<T>> currentChildNode = parentNode->firstChild;
     while (currentChildNode)
     {
-        TreeNode<T>* nextSibling = currentChildNode->nextSibling;
+        std::shared_ptr<TreeNode<T>> nextSibling = currentChildNode->nextSibling;
         removeAllChildren(currentChildNode);
-        delete currentChildNode;
+        currentChildNode.reset();
         currentChildNode = nextSibling;
     }
 }
 
 template<typename T>
-void Tree<T>::remakeLinks(const TreeNode<T>* nodeToRemove)
+void Tree<T>::remakeLinks(const std::shared_ptr<TreeNode<T>> nodeToRemove)
 {
-    TreeNode<T>* parentOfNodeToRemove = nodeToRemove->parent;
+    std::shared_ptr<TreeNode<T>> parentOfNodeToRemove = nodeToRemove->parent.lock();
     if (parentOfNodeToRemove->firstChild == nodeToRemove)
     {
         parentOfNodeToRemove->firstChild = nodeToRemove->nextSibling;
     }
     else
     {
-        TreeNode<T>* prevSibling = parentOfNodeToRemove->firstChild;
+        std::shared_ptr<TreeNode<T>> prevSibling = parentOfNodeToRemove->firstChild;
         while (prevSibling->nextSibling != nodeToRemove)
         {
             prevSibling = prevSibling->nextSibling;
@@ -150,16 +150,20 @@ void Tree<T>::remakeLinks(const TreeNode<T>* nodeToRemove)
 template<typename T>
 void Tree<T>::removeNode(const T& valueToRemove)
 {
-    TreeNode<T>* nodeToRemove = getNode(root, valueToRemove);
+    std::shared_ptr<TreeNode<T>> nodeToRemove = getNode(root, valueToRemove);
     if (!nodeToRemove)
     {
         std::cout << "The node you want to delete doesn't exist!" << "\n";
         return;
     }
     removeAllChildren(nodeToRemove);
+    if (isRoot(nodeToRemove))
+    {
+        root.reset();
+        return;
+    }
     remakeLinks(nodeToRemove);
-    nodeToRemove = nullptr;
-    delete nodeToRemove;
+    nodeToRemove.reset();
 }
 
 template<typename T>
@@ -167,25 +171,4 @@ void Tree<T>::printTree()
 {
     traverseTree(root);
     std::cout << "\n";
-}
-
-int main() // TO DO: handle root deletion. It's not working properly
-{
-    Tree<char> tree('A');
-    tree.insertNode('A', 'B');
-    tree.insertNode('A', 'C');
-    tree.insertNode('A', 'D');
-    tree.insertNode('B', 'E');
-    tree.insertNode('B', 'F');
-    tree.insertNode('D', 'G');
-    tree.insertNode('D', 'H');
-    tree.insertNode('D', 'I');
-    tree.insertNode('B', 'J');
-    std::cout << "Tree before deletion:\n";
-    tree.printTree();
-    tree.removeNode('D');
-    std::cout << "Tree after deletion:\n";
-    tree.printTree();
-
-    return 0;
 }
