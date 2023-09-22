@@ -21,7 +21,6 @@ private:
     void traverseTree(std::shared_ptr<TreeNode<T>> node);
     void removeAllChildren(std::shared_ptr<TreeNode<T>> node);
     void remakeLinks(const std::shared_ptr<TreeNode<T>>nodeToRemove);
-    std::shared_ptr<TreeNode<T>> deepCopy(const std::shared_ptr<TreeNode<T>> srcNode);
 
     bool isRoot(const std::shared_ptr<TreeNode<T>> node) const;
 
