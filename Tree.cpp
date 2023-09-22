@@ -1,4 +1,3 @@
-//TO DO: REFACTOR
 #include <iostream>
 #include "Tree.hpp"
 
@@ -15,6 +14,18 @@ Tree<T>::Tree(const T& rootValue)
 }
 
 template<typename T>
+void Tree<T>::addNextSibling(TreeNode<T>* parentNode, TreeNode<T>* child)
+{
+    TreeNode<T>* currentChildNode = parentNode->firstChild;
+    while (currentChildNode->nextSibling)
+    {
+        currentChildNode = currentChildNode->nextSibling;
+    }
+    currentChildNode->nextSibling = child;
+    child->parent = parentNode;
+}
+
+template<typename T>
 void Tree<T>::addChild(TreeNode<T>* parentNode, const T& toAddValue)
 {
     TreeNode<T>* child = new TreeNode<T>(toAddValue);
@@ -22,42 +33,35 @@ void Tree<T>::addChild(TreeNode<T>* parentNode, const T& toAddValue)
     if (!parentNode->firstChild)
     {
         parentNode->firstChild = child;
+        child->parent = parentNode;
     }
     else
     {
-        TreeNode<T>* currentChildNode = parentNode->firstChild;
-        while (currentChildNode->nextSibling != nullptr)
-        {
-            currentChildNode = currentChildNode->nextSibling;
-        }
-        currentChildNode->nextSibling = child;
+        addNextSibling(parentNode, child);
     }
 }
 
 template<typename T>
-void Tree<T>::add(const T& parentValue, const T& toAddValue)
+void Tree<T>::insertNode(const T& parentValue, const T& toAddValue)
 {
-    TreeNode<T>* parentNode = find(root, parentValue);
     if (!root)
     {
         root = new TreeNode<T>(toAddValue);
         std::cout << "Root initialized to: " << root->data << "\n";
         return;
     }
+    TreeNode<T>* parentNode = getNode(root, parentValue);
     if (!parentNode)
     {
         std::cout << "Nothing to add!" << "\n";
         return;
     }
-    else
-    {
-        addChild(parentNode, toAddValue);
-        std::cout << "Value: " << toAddValue << " added to parent node: " << parentValue << "\n";
-    }
+    addChild(parentNode, toAddValue);
+    std::cout << "Value: " << toAddValue << " added to parent node: " << parentValue << "\n";
 }
 
 template<typename T>
-void Tree<T>::traverse(TreeNode<T>* node)
+void Tree<T>::traverseTree(TreeNode<T>* node)
 {
     if (!node)
     {
@@ -65,50 +69,123 @@ void Tree<T>::traverse(TreeNode<T>* node)
     }
     std::cout << node->data << " ";
     TreeNode<T>* currentChild = node->firstChild;
-    while (currentChild != nullptr)
+    while (currentChild)
     {
-        traverse(currentChild);
+        traverseTree(currentChild);
         currentChild = currentChild->nextSibling;
     }
 }
 
 template<typename T>
-TreeNode<T>* Tree<T>::find(TreeNode<T>* node, const T& valueToFind)
+TreeNode<T>* Tree<T>::getNode(TreeNode<T>* searchStartingNode, const T& valueToGet) const
 {
-    TreeNode<T>* result = nullptr;
+    TreeNode<T>* nodeToFind = nullptr;
 
-    if (!node)
+    if (!searchStartingNode)
     {
         return nullptr;
     }
-    if (node->data == valueToFind)
+    if (searchStartingNode->data == valueToGet)
     {
-        return node;
+        return searchStartingNode;
     }
-    TreeNode<T>* currentChild = node->firstChild;
-    while (!result && currentChild)
+    TreeNode<T>* currentChild = searchStartingNode->firstChild;
+    while (!nodeToFind && currentChild)
     {
-        result = find(currentChild, valueToFind);
+        nodeToFind = getNode(currentChild, valueToGet);
         currentChild = currentChild->nextSibling;
     }
 
-    return result;
+    return nodeToFind;
 }
 
 template<typename T>
-TreeNode<T>* Tree<T>::find(const T& valueToFind)
+TreeNode<T>* Tree<T>::find(const T& valueToFind) const
 {
-    return find(root, valueToFind);
+    return getNode(root, valueToFind);
+}
+
+template<typename T>
+bool Tree<T>::isRoot(const TreeNode<T>* node) const
+{
+    return node == root;
+}
+
+template<typename T>
+void Tree<T>::removeAllChildren(TreeNode<T>* parentNode)
+{
+    if (!parentNode)
+    {
+        return;
+    }
+    TreeNode<T>* currentChildNode = parentNode->firstChild;
+    while (currentChildNode)
+    {
+        TreeNode<T>* nextSibling = currentChildNode->nextSibling;
+        removeAllChildren(currentChildNode);
+        delete currentChildNode;
+        currentChildNode = nextSibling;
+    }
+}
+
+template<typename T>
+void Tree<T>::remakeLinks(const TreeNode<T>* nodeToRemove)
+{
+    TreeNode<T>* parentOfNodeToRemove = nodeToRemove->parent;
+    if (parentOfNodeToRemove->firstChild == nodeToRemove)
+    {
+        parentOfNodeToRemove->firstChild = nodeToRemove->nextSibling;
+    }
+    else
+    {
+        TreeNode<T>* prevSibling = parentOfNodeToRemove->firstChild;
+        while (prevSibling->nextSibling != nodeToRemove)
+        {
+            prevSibling = prevSibling->nextSibling;
+        }
+        prevSibling->nextSibling = nodeToRemove->nextSibling;
+    }
+}
+
+template<typename T>
+void Tree<T>::removeNode(const T& valueToRemove)
+{
+    TreeNode<T>* nodeToRemove = getNode(root, valueToRemove);
+    if (!nodeToRemove)
+    {
+        std::cout << "The node you want to delete doesn't exist!" << "\n";
+        return;
+    }
+    removeAllChildren(nodeToRemove);
+    remakeLinks(nodeToRemove);
+    nodeToRemove = nullptr;
+    delete nodeToRemove;
 }
 
 template<typename T>
 void Tree<T>::printTree()
 {
-    traverse(root);
+    traverseTree(root);
+    std::cout << "\n";
 }
 
-int main()
+int main() // TO DO: handle root deletion. It's not working properly
 {
-    
+    Tree<char> tree('A');
+    tree.insertNode('A', 'B');
+    tree.insertNode('A', 'C');
+    tree.insertNode('A', 'D');
+    tree.insertNode('B', 'E');
+    tree.insertNode('B', 'F');
+    tree.insertNode('D', 'G');
+    tree.insertNode('D', 'H');
+    tree.insertNode('D', 'I');
+    tree.insertNode('B', 'J');
+    std::cout << "Tree before deletion:\n";
+    tree.printTree();
+    tree.removeNode('D');
+    std::cout << "Tree after deletion:\n";
+    tree.printTree();
+
     return 0;
 }
